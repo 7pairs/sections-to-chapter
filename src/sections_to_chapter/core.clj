@@ -19,13 +19,32 @@
 (defn review-file? [target]
   (string/starts-with? target "-"))
 
-(defn get-file-name [target]
+(defn get-chapter-file-name [target]
   (if-let [m (re-find #"^- *([^ ]+$)" target)]
     (m 1)))
 
 (defn parse-catalog [path]
-  (with-open [rdr (io/reader path)]
-    (doall (for [line (line-seq rdr) :let [target (string/trim line)] :when (review-file? target)] (get-file-name target)))))
+  (with-open [r (io/reader path)]
+    (doall (for [line (line-seq r) :let [target (string/trim line)] :when (review-file? target)] (get-chapter-file-name target)))))
 
-(defn -main [articles-path]
-  (print (parse-catalog (str articles-path "/catalog.yml"))))
+(defn import-section? [target]
+  (re-find #"^#@# *IMPORT-SECTION" target))
+
+(defn get-section-file-name [target]
+  (if-let [m (re-find #"^#@# *IMPORT-SECTION +([^ ]+)" target)]
+    (m 1)))
+
+(defn lower-level [target]
+  (if (string/starts-with? target "=") (str "=" target) target))
+
+(defn read-section-file [path]
+  (with-open [r (io/reader path)]
+    (string/join "\n" (for [line (line-seq r)] (lower-level line)))))
+
+(defn marge-files! [input-dir output-dir chapter-file-name]
+  (with-open [r (io/reader (str input-dir "/" chapter-file-name))]
+    (with-open [w (io/writer (str output-dir "/" chapter-file-name))]
+      (doseq [line (line-seq r)] (.write w (str (if (import-section? line) (read-section-file (str input-dir "/" (get-section-file-name line))) line) "\n"))))))
+
+(defn -main [articles-dir]
+  (doseq [chapter-file-name (parse-catalog (str articles-dir "/catalog.yml"))] (marge-files! (str articles-dir "/origin") articles-dir chapter-file-name)))
