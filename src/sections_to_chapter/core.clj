@@ -14,7 +14,8 @@
 
 (ns sections-to-chapter.core
   (:require [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:gen-class))
 
 (defn review-file? [target]
   (string/starts-with? target "-"))

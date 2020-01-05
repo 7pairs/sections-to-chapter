@@ -19,4 +19,5 @@
             :url "https://www.apache.org/licenses/LICENSE-2.0"}
   :dependencies [[org.clojure/clojure "1.10.0"]]
   :main sections-to-chapter.core
+  :profiles {:uberjar {:main sections-to-chapter.core, :aot :all}}
   :repl-options {:init-ns sections-to-chapter.core})
